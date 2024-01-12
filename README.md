@@ -1,2 +1,0 @@
-# Sprotifly
-Project Databaser
