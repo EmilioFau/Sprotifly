@@ -6,6 +6,7 @@ public class UI
     private Database database;
     Users user;
     private Logic logic;
+    int user_id;
     public UI()
     {
         database = new();
@@ -14,29 +15,29 @@ public class UI
     }
     public void StartingMenu()
     {
+
+        Console.WriteLine("Welcome to Sprotifly!");
+        Console.WriteLine("Please choose an option:");
+        Console.WriteLine("1. Login");
+        Console.WriteLine("2. Register");
+        Console.WriteLine("Q. Exit");
+        string input = Console.ReadLine();
+        switch (input)
         {
-            Console.WriteLine("Welcome to Sprotifly!");
-            Console.WriteLine("Please choose an option:");
-            Console.WriteLine("1. Login");
-            Console.WriteLine("2. Register");
-            Console.WriteLine("Q. Exit");
-            string input = Console.ReadLine();
-            switch (input)
-            {
-                case "1":
-                    LoginMenu();
-                    break;
-                case "2":
-                    logic.Register();
-                    break;
-                case "Q":
-                case "q":
-                    Environment.Exit(0);
-                    break;
-                default:
-                    Console.WriteLine("Invalid input, please try again.");
-                    break;
-            }
+            case "1":
+                LoginMenu();
+                break;
+            case "2":
+                logic.Register();
+                break;
+            case "Q":
+            case "q":
+                Environment.Exit(0);
+                break;
+            default:
+                Console.WriteLine("Invalid input, please try again.");
+                break;
+
         }
     }
     public void LoginMenu()
@@ -52,8 +53,7 @@ public class UI
             {
                 Console.WriteLine("Login successful");
                 user = database.GetUser(username);
-                List<Playlist> playlists = database.GetPlaylists(user.Id);
-                Console.WriteLine(user.ToString());
+                user_id = user.Id;
                 break;
             }
             else
@@ -64,7 +64,26 @@ public class UI
             }
         }
     }
-    public void ShowMyPlaylists(List<Playlist> playlists)
+    public void ShowMyPlaylistsWithInfo(List<Playlist> playlists)
+    {
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.AddColumns("Playlist", "Total Length", "Total Songs", "Date Added");
+        foreach (Playlist item in playlists)
+        {
+            table.AddRow($"{item.Playlist_Name}", $"{item.Total_Length} min", $"{item.Total_Songs}", $"{item.Date_Added.ToShortDateString()}");
+        }
+        Console.Clear();
+        AnsiConsole.Write(table);
+        Console.Write("Choose playlist or back with [R]: ");
+        string playlist = Console.ReadLine();
+        if (playlist == "R" || playlist == "r")
+        {
+            return;
+        }
+        PlaylistMenu(playlist);
+    }
+    private void ShowMyPlaylists(List<Playlist> playlists)
     {
         var table = new Table();
         table.Border(TableBorder.Rounded);
@@ -75,22 +94,20 @@ public class UI
         }
         Console.Clear();
         AnsiConsole.Write(table);
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
     }
     private void ShowSongs(List<Song> songs)
     {
         var table = new Table();
         table.Border(TableBorder.Rounded);
-        table.AddColumns("Song", "Length", "Genre", "Album");
+        table.AddColumns("Id", "Song", "Length", "Genre", "Album");
         foreach (Song item in songs)
         {
             item.Minutes = item.CalculateSongLength(item.Song_length);
-            table.AddRow($"{item.Title}", $"{item.Minutes:F2}", $"{item.Genre}", $"{item.Album}");
+            table.AddRow($"{item.Id}", $"{item.Title}", $"{item.Minutes:F2} min", $"{item.Genre}", $"{item.Album}");
         }
         Console.Clear();
         AnsiConsole.Write(table);
-        Console.WriteLine("Press any key to continue...");
+        Console.Write("Press any key to continue...");
         Console.ReadKey();
     }
     private void ShowAlbum(List<Album> albums)
@@ -113,7 +130,7 @@ public class UI
         }
         Console.Clear();
         AnsiConsole.Write(table);
-        Console.WriteLine("Press any key to continue...");
+        Console.Write("Press any key to continue...");
         Console.ReadKey();
     }
     private void ShowArtist(List<Artist> artists)
@@ -143,7 +160,7 @@ public class UI
     private void ShowMenu()
     {
         Console.Clear();
-        Console.Write("[1] My Playlists\n[2] Search\n[3] Create Playlist\n[Q] Quit\n> ");
+        Console.Write("[1] My Playlists\n[2] Search\n[3] Create Playlist\n[4] Music\n[Q] Quit\n> ");
     }
     public void SearchMenu()
     {
@@ -168,6 +185,30 @@ public class UI
                         break;
                     }
                     ShowSongs(result);
+                    Console.Write("\nAdd song to playlist? [Y/N]: ");
+                    string choice = Console.ReadLine();
+                    if (choice == "Y" || choice == "y")
+                    {
+                        ShowMyPlaylists(database.GetPlaylistsForUser(user_id));
+                        Console.Write("Choose playlist: ");
+                        string playlist = Console.ReadLine();
+                        List<Playlist> playlists = database.GetPlaylistsForUser(user_id);
+                        int playlist_id = database.GetPlaylistId(playlist);
+                        foreach (Playlist item in playlists)
+                        {
+                            Console.ReadKey();
+                            if (item.Playlist_Name == playlist)
+                            {
+                                foreach (Song song in result)
+                                {
+                                    logic.AddSongToPlaylist(playlist_id, song.Id);
+                                    Console.WriteLine($"{song.Title} added to {item.Playlist_Name}");
+                                    Console.WriteLine("Press any key to continue...");
+                                    Console.ReadKey();
+                                }
+                            }
+                        }
+                    }
                     break;
                 case "2":
                     Console.Clear();
@@ -216,7 +257,7 @@ public class UI
             switch (input)
             {
                 case "1":
-                    ShowMyPlaylists(logic.GetPlaylists(user.Id));
+                    ShowMyPlaylistsWithInfo(logic.GetPlaylists(user_id));
                     break;
                 case "2":
                     SearchMenu();
@@ -226,10 +267,20 @@ public class UI
                     Console.Write("Can not contain å,ä,ö,Å,Ä,Ö. Write it on your own risk\nPlaylist name: ");
                     string playlist_name = Console.ReadLine();
                     DateTime date_added = DateTime.Now;
-                    logic.CreatePlaylist(user.Id, playlist_name, date_added);
+                    if (string.IsNullOrEmpty(playlist_name))
+                    {
+                        Console.WriteLine("Playlist name can't be empty");
+                        Console.WriteLine("Press any key to continue...");
+                        Console.ReadKey();
+                        return;
+                    }
+                    logic.CreatePlaylist(user_id, playlist_name, date_added);
                     Console.WriteLine("Playlist created");
                     Console.WriteLine("Press any key to continue...");
                     Console.ReadKey();
+                    break;
+                case "4":
+                    MusicMenu();
                     break;
                 case "Q":
                 case "q":
@@ -237,6 +288,88 @@ public class UI
                     break;
                 default:
                     Console.WriteLine("Invalid input, please try again.");
+                    break;
+            }
+        }
+    }
+    private void MusicMenu()
+    {
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("[1] All songs\n[2] All artists\n[3] All albums\n[R] Back");
+            string choice = Console.ReadLine();
+            switch (choice)
+            {
+                case "1":
+                    ShowSongs(logic.AllSongs());
+                    break;
+                case "2":
+                    ShowArtist(logic.AllArtists());
+                    break;
+                case "3":
+                    ShowAlbum(logic.AllAlbums());
+                    break;
+                case "R":
+                case "r":
+                    return;
+
+                default:
+                    Console.WriteLine("Wrong input!");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    break;
+            }
+        }
+    }
+    public void PlaylistMenu(string playlist)
+    {
+        while (true)
+        {
+            List<Song> songs = database.GetSongsFromPlaylist(playlist);
+            Console.Clear();
+            ShowSongs(songs);
+            Console.WriteLine("\n[1] Update Name\n[2] Delete List\n[3] Delete Song from playlist\n[R] Return\n> ");
+            string choice = Console.ReadLine();
+            switch (choice)
+            {
+                case "1":
+                    Console.Write("New name: ");
+                    string newname = Console.ReadLine();
+                    logic.ChangePlaylistName(playlist, newname);
+                    Console.WriteLine("Playlist name changed");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    break;
+                case "2":
+                    Console.Write("Are you sure you want to delete this playlist? [Y/N]: ");
+                    string answer = Console.ReadLine();
+                    if (answer == "Y" || answer == "y")
+                    {
+                        logic.DeletePlaylist(playlist);
+                        Console.WriteLine("Playlist deleted");
+                        Console.WriteLine("Press any key to continue...");
+                        Console.ReadKey();
+                        return;
+                    }
+                    break;
+                case "3":
+                    ShowSongs(database.GetSongsFromPlaylist(playlist));
+                    Console.Write("\nChoose song id to remove: ");
+                    int song = int.TryParse(Console.ReadLine(), out int result) ? result : 0;
+                    int playlist_id = database.GetPlaylistId(playlist);
+                    logic.DeleteSongFromPlaylist(playlist_id, song);
+                    Console.WriteLine("Song removed");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    break;
+                case "R":
+                case "r":
+                    return;
+                default:
+                    Console.WriteLine("Wrong input!");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
                     break;
             }
         }

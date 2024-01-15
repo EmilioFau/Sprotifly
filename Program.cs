@@ -5,7 +5,6 @@ internal class Program
     {
         Console.Clear();
         UI ui = new();
-        Logic logic = new();
         ui.StartingMenu();
         ui.Menu();
     }

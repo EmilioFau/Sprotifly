@@ -1,12 +1,11 @@
 namespace Sprotifly2;
 public class Logic
 {
-    List<Country> countries;
+    private UI ui;
     private Database database;
     public Logic()
     {
         database = new();
-        countries = new();
     }
     public void TryFunctions()
     {
@@ -50,7 +49,7 @@ public class Logic
     }
     public List<Playlist> GetPlaylists(int user_id)
     {
-        List<Playlist> playlists = database.GetPlaylists(user_id);
+        List<Playlist> playlists = database.GetPlaylistsWithInfo(user_id);
         return playlists;
     }
     public List<Song> SearchSong(string search)
@@ -71,15 +70,38 @@ public class Logic
 
     public void CreatePlaylist(int user_id, string playlist_name, DateTime date_added)
     {
-
-        if (string.IsNullOrEmpty(playlist_name))
-        {
-            Console.WriteLine("Playlist name can't be empty");
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
-            return;
-        }
         database.CreatePlaylist(user_id, playlist_name, date_added);
     }
+    public void AddSongToPlaylist(int playlist_id, int song_id)
+    {
+        database.AddSongToPlaylist(playlist_id, song_id);
+    }
 
+    public List<Song> AllSongs()
+    {
+        List<Song> songs = database.GetSongs();
+        return songs;
+    }
+    public List<Artist> AllArtists()
+    {
+        List<Artist> artists = database.GetArtists();
+        return artists;
+    }
+    public List<Album> AllAlbums()
+    {
+        List<Album> albums = database.GetAlbums();
+        return albums;
+    }
+    public void ChangePlaylistName(string oldName, string newName)
+    {
+        database.ChangePlaylistName(oldName, newName);
+    }
+    public void DeletePlaylist(string playlist_name)
+    {
+        database.DeletePlaylist(playlist_name);
+    }
+    public void DeleteSongFromPlaylist(int playlist_id, int song_id)
+    {
+        database.DeleteSongFromPlaylist(playlist_id, song_id);
+    }
 }
