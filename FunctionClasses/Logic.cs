@@ -11,11 +11,7 @@ public class Logic
     }
     public void TryFunctions()
     {
-        List<Song> songs = database.GetSongsWithGenre();
-        foreach (var item in songs)
-        {
-            Console.WriteLine(item.ToString());
-        }
+
     }
     public void Register()
     {

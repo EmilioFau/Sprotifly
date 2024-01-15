@@ -1,4 +1,5 @@
 namespace Sprotifly2;
+using Spectre.Console;
 
 public class UI
 {
@@ -13,6 +14,7 @@ public class UI
     }
     public void MainMenu()
     {
+        ShowSongs();
         Console.WriteLine("Welcome to Sprotifly!");
         Console.WriteLine("Please choose an option:");
         Console.WriteLine("1. Login");
@@ -61,5 +63,18 @@ public class UI
                 Console.ReadKey();
             }
         }
+    }
+    private void ShowSongs()
+    {
+        List<Song> songs = database.GetSongs();
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.AddColumns("Song", "Length", "Genre", "Album");
+        foreach (Song item in songs)
+        {
+            table.AddRow($"{item.Title}", $"{item.Minutes}", $"{item.Genre}", $"{item.Album}");
+        }
+        Console.Clear();
+        AnsiConsole.Write(table);
     }
 }

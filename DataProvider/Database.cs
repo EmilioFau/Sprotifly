@@ -12,14 +12,6 @@ public class Database
     public List<Song> GetSongs()
     {
         connection.Open();
-        List<Song> songs = connection.Query<Song>("SELECT * FROM Songs").ToList();
-        connection.Close();
-        return songs;
-    }
-
-    public List<Song> GetSongsWithGenre()
-    {
-        connection.Open();
         List<Song> songs = connection.Query<Song>("SELECT song.id, song.title ,song.song_length, album.title as album, genre.genre FROM Song INNER JOIN Album on album.id = song.album_id INNER JOIN Genre on genre.id = song.genre_id").ToList();
         connection.Close();
         return songs;
