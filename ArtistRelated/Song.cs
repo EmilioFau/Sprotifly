@@ -7,10 +7,7 @@ public class Song
     public string Genre { get; set; }
     public string Album { get; set; }
     public float Minutes { get; set; }
-    public Song()
-    {
-        Minutes = CalculateSongLength(Song_length);
-    }
+    public string Artist { get; set; }
 
     public override string ToString()
     {
@@ -19,7 +16,7 @@ public class Song
 
     public float CalculateSongLength(int seconds)
     {
-        float minutes = (float)seconds / 60;
+        float minutes = Convert.ToSingle(seconds) / 60;
         return minutes;
     }
 }

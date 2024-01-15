@@ -4,7 +4,8 @@ public class Album
 {
     public int Id { get; set; }
     public string Title { get; set; }
-    public int Label_Id { get; set; }
-    public DateOnly Release_Date { get; set; }
+    public string Label { get; set; }
+    public string Artist { get; set; }
+    public DateTime Release_Date { get; set; }
 
 }

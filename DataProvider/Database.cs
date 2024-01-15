@@ -23,28 +23,56 @@ public class Database
         connection.Close();
         return artists;
     }
-    public List<Album> GetAlbums()
+    public List<Artist> SearchArtist(string artist)
     {
         connection.Open();
-        string sqlquery = "SELECT a.name as artist_or_band, ab.title as albumtitle FROM Artist AS a INNER JOIN Album_to_Artist AS ata on ata.artist_id = a.id INNER JOIN Album ab on ab.id = ata.album_id;";
-        List<Album> albums = connection.Query<Album>(sqlquery).ToList();
+        string sqlquery = "SELECT artist.id, artist.name, artist.country_id, country.country, Album.title as Album FROM Artist INNER JOIN Country on Country.id = Artist.country_id INNER JOIN Album on Album.artist_id = Artist.id WHERE artist.name = @artist";
+        IEnumerable<Artist> result = connection.Query<Artist>(sqlquery, new { artist });
+        List<Artist> artists = result.ToList();
+        connection.Close();
+        return artists;
+    }
+    public List<Album> SearchAlbum(string album)
+    {
+        connection.Open();
+        string sqlquery = "SELECT album.id, album.title, artist.name as artist, Label.name as label, album.release_date FROM Album INNER JOIN Artist on Artist.id = Album.artist_id INNER JOIN Label on Label.id = Album.id WHERE album.title = @album";
+        IEnumerable<Album> result = connection.Query<Album>(sqlquery, new { album });
+        List<Album> albums = result.ToList();
         connection.Close();
         return albums;
     }
-    public List<Genre> GetGenres()
+    public List<Album> GetAlbums()
     {
         connection.Open();
-        List<Genre> genres = connection.Query<Genre>("SELECT * FROM Genres").ToList();
+        string sqlquery = "SELECT album.id, album.title, artist.name as artist, Label.name as label, album.release_date FROM Album INNER JOIN Artist on Artist.id = Album.artist_id INNER JOIN Label on Label.id = Album.id ORDER BY artist.name";
+        IEnumerable<Album> result = connection.Query<Album>(sqlquery);
+        List<Album> albums = result.ToList();
         connection.Close();
-        return genres;
+        return albums;
     }
-    public List<Country> MatchCountry(string Country_id)
+    public List<Song> SearchSong(string song)
     {
         connection.Open();
-        IEnumerable<Country> result = connection.Query<Country>("SELECT * FROM Country WHERE id = @country_id", new { Country_id });
-        List<Country> countries = result.ToList();
+        string sqlquery = "SELECT song.id, song.title ,song.song_length, album.title as album, genre.genre FROM Song INNER JOIN Album on album.id = song.album_id INNER JOIN Genre on genre.id = song.genre_id WHERE song.title = @song";
+        IEnumerable<Song> result = connection.Query<Song>(sqlquery, new { song });
+        List<Song> songs = result.ToList();
+        connection.Close();
+        return songs;
+    }
+    public List<Country> GetCountries()
+    {
+        connection.Open();
+        List<Country> countries = connection.Query<Country>("SELECT * FROM Country").ToList();
         connection.Close();
         return countries;
+    }
+    public int GetCountryId(string country)
+    {
+        connection.Open();
+        IEnumerable<Country> result = connection.Query<Country>("SELECT id FROM Country WHERE country = @country", new { country });
+        List<Country> countries = result.ToList();
+        connection.Close();
+        return countries[0].Id;
     }
     public List<Label> GetLabels()
     {
@@ -75,22 +103,19 @@ public class Database
         var user = connection.QueryFirstOrDefault<Users>(sqlquery, new { username, password });
         return user != null;
     }
-    // public void NewPlaylist(string playlist_name, int user_id)
-    // {
-    //     connection.Open();
-    //     DateTime today = DateTime.Now;
-    //     DateOnly dateOnly = today.Date;
-    //     Console.WriteLine($"Dagens datum med månad och år: {dateOnly:yyyy-MM-dd}");
-    //     string sqlquery = "INSERT INTO Playlist (user_id, date_added, playlist_name ) VALUES (@playlist_name, @user_id, @date_added)";
-    //     connection.Execute(sqlquery, new { playlist_name, user_id, dateOnly });
-    //     connection.Close();
-    // }
-
-    public void NewUser(string firstname, string lastname, string password, string country, string username, int country_id)
+    public void CreatePlaylist(int user_id, string playlist_name, DateTime date_added)
     {
         connection.Open();
-        string sqlquery = "INSERT INTO Users (firstname, lastname, password, country, username) VALUES (@firstname, @lastname, @password, @country_id, @username)";
-        connection.Execute(sqlquery, new { firstname, lastname, password, country_id, username });
+        string sqlquery = "INSERT INTO Playlist (user_id, playlist_name, date_added) VALUES (@user_id, @playlist_name, @date_added)";
+        connection.Execute(sqlquery, new { user_id, playlist_name, date_added });
+        connection.Close();
+    }
+
+    public void NewUser(string firstname, string lastname, string password, string username, int country_id, bool admin)
+    {
+        connection.Open();
+        string sqlquery = "INSERT INTO Users (firstname, lastname, password, country_id, username, admin) VALUES (@firstname, @lastname, @password, @country_id, @username, @admin)";
+        connection.Execute(sqlquery, new { firstname, lastname, password, country_id, username, admin });
         connection.Close();
     }
 
